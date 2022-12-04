@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using System.Diagnostics;
 
@@ -25,11 +26,16 @@ public class Hub : MonoBehaviour
     public AddRoadButton ABR;
     GameObject hubUi;
     GameObject UI;
+    GameObject HelpUI;
     CarSpawnerManager carSpawnerManager;
     RoadManager RoadManager;
     HubPathLink hubPathLink;
     float CarsPer10;
+    public int arrivedCars;
     SpriteRenderer spriteRenderer;
+    float startTime;
+
+    List<int> avgSpeed;
 
     
     
@@ -47,6 +53,7 @@ public class Hub : MonoBehaviour
         hubUi = Camera.main.GetComponent<materialHolder>().GetHubUi();
         ABR = Camera.main.GetComponent<AddRoadButton>();
         hubPathLink = new HubPathLink(this);
+        HelpUI = Camera.main.GetComponent<materialHolder>().HelpUi;
 
         
         UI =Instantiate(hubUi,gameObject.transform.position,Quaternion.identity);
@@ -64,10 +71,9 @@ public class Hub : MonoBehaviour
             spriteRenderer = GetComponent<SpriteRenderer>();
             spriteRenderer.color = colour;
         } 
-        
-        UnityEngine.Debug.Log(orientation);
 
-        
+        avgSpeed = new List<int>();
+
         StartCoroutine(CheckAndSpawnCars());
         
     }
@@ -77,7 +83,7 @@ public class Hub : MonoBehaviour
 
     void OnMouseUp()
     {
-
+        HelpUI.SetActive(false);
         UI.SetActive(true);
         
     }
@@ -87,6 +93,7 @@ public class Hub : MonoBehaviour
         if(closeUi == true)
         {
             UI.SetActive(false);
+            HelpUI.SetActive(true);
             closeUi = false;
         }
         if(clicked == true )
@@ -101,22 +108,23 @@ public class Hub : MonoBehaviour
   
     IEnumerator CheckAndSpawnCars()
     {
-
+        List<Hub> mostRecentHubs = RoadManager.hubs;
         yield return new WaitForSeconds(10/(CarsPer10*2));
         while(true)
         {
-            foreach(Hub hub in RoadManager.hubs)
+            foreach(Hub hub in mostRecentHubs)
             {
                 if(hub != this)
                 {
                     hubPathLink.TryAddPath(hub);
                     if(hubPathLink.ConnectedPath(hub))
                     {
-                    CarSpawnerManager.RequestSpawn(this,hub); 
+                        CarSpawnerManager.RequestSpawn(this,hub);
+                        yield return new WaitForSeconds(5/(CarsPer10*2)); 
                     }
                 }
             }
-            yield return new WaitForSeconds(10/(CarsPer10*2));
+            yield return new WaitForSeconds(5/(CarsPer10*2));
         }
         
     }
@@ -160,6 +168,7 @@ public class Hub : MonoBehaviour
         
 
         Unit unit = car.AddComponent<Unit>();
+        unit.targetHub = targethub;
         unit.target = targethub.transform;
         unit.turnDst = GlobalTurnDst;
         unit.turnSpeed = GlobalTurnSpeed;
@@ -201,8 +210,17 @@ public class Hub : MonoBehaviour
         CarsPer10 = value;
     }
 
-    private float CarsArrivingPerSecond(int NofCars)
+    public void SetStartTimeAndCarCount()
     {
-        return(NofCars/Time.time);
+        startTime = Time.time;
+        arrivedCars = 0;
+    }
+    public void AddTargetSpeed(float speed)
+    {
+        avgSpeed.Add((int)speed);
+    }
+    public float GetAverageSpeed()
+    {
+        return(avgSpeed.Sum());
     }
 }
