@@ -4,17 +4,22 @@ using UnityEngine;
 
 public class Node : IHeapItem<Node>
 {
+    // Is the node walkable
     public bool walkable;
+    // The posistion of the node
     public Vector3 worldPosistion;
+    // Its x and y posistion in the grid 
     public int gridX;
     public int gridY;
 
+    // Its Gcost,Hcost and parent node
     public int gCost;
     public int hCost;
     public Node parent;
+    // The index in the heap
     int heapIndex;
 
-
+    // Constructor
     public Node(bool _walkable, Vector3 _worldPos, int _gridx , int _gridy)
     {
         walkable = _walkable;
@@ -22,7 +27,7 @@ public class Node : IHeapItem<Node>
         gridX = _gridx;
         gridY = _gridy;
     }
-
+    // Getter for fcost
     public int fCost
     {
         get
@@ -30,7 +35,7 @@ public class Node : IHeapItem<Node>
             return gCost + hCost;
         }
     }
-    
+    // Getter for HeapIndex
     public int HeapIndex
     {
         get
@@ -42,7 +47,7 @@ public class Node : IHeapItem<Node>
             heapIndex = value;
         }
     }
-
+    // Method which compares to nodes
     public int CompareTo(Node node1)
     {
         int compare = fCost.CompareTo(node1.fCost);

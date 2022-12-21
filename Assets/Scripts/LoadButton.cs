@@ -3,24 +3,28 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class HelpButton : MonoBehaviour
+public class LoadButton : MonoBehaviour
 {
-    // Declare a public field for the UI element that should be displayed when the button is clicked
-    public GameObject HelpUI;
+    //The input field 
+    public GameObject inputFieldGameObject;
+
+    // the inputfield button 
+    public InputFieldButton inputFieldButton;
     void Awake()
     {
         // Get a reference to the button component attached to this game object
         Button bttn = this.GetComponent<Button>();
-        // Set the HelpUI GameObject to be inactive initially
-        HelpUI.SetActive(false);
-        // Add a listener for the button's onClick event
         bttn.onClick.AddListener(click);
     }
+
     // This function will be called when the button is clicked
+
     private void click()
     {
-        // Set the HelpUI GameObject to be active
-        HelpUI.SetActive(true);
+        //sets the input field to active and sets the button to load mode 
+        inputFieldGameObject.SetActive(true);
+        inputFieldButton.setting = true;
+
+        inputFieldButton.IsSavingOrLoading = true;    
     }
 }
-

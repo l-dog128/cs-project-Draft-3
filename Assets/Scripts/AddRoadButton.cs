@@ -4,16 +4,16 @@ using UnityEngine;
 using PathCreation;
 using PathCreation.Examples;
 using UnityEditor;
-using System;
 public class AddRoadButton : MonoBehaviour
 {
+    public InputFieldButton inputFieldButton;
     public Material sharedMaterial;
     [HideInInspector]
     RoadManager roadManager;
-    RoadData RoadData;
     List<RoadData> roads;
     void Start()
     {
+        //get refrence to RoadManger and set roads
         roadManager = Camera.main.GetComponent<RoadManager>();
         roads = roadManager.roads;
         
@@ -21,22 +21,25 @@ public class AddRoadButton : MonoBehaviour
 
     void Update()
     {
-        if(Input.GetKeyUp(KeyCode.N))
+        if((!inputFieldButton.IsSavingOrLoading) && Input.GetKeyUp(KeyCode.N))
         {
             var Road = CreateNewRoad();
         }
     }
-
+    //Method to create a new road when N is pressed
     public GameObject CreateNewRoad()
     {
+        //Create new object, name it add road component  
         GameObject Road = new GameObject();
         Road.name = "Road" + roads.Count.ToString();
         Road.AddComponent<Road>();
     
+        //Get Road component and set values 
         Road addedRoad = Road.GetComponent<Road>();
         addedRoad.material = sharedMaterial;
         addedRoad.roadData = new RoadData();
 
+        //Add components and set layer
         Road.AddComponent<PathCreator>();
         Road.AddComponent<PathPlacer>();
         Road.AddComponent<RoadMeshCreator>();
@@ -49,6 +52,7 @@ public class AddRoadButton : MonoBehaviour
         roads.Add(addedRoad.roadData);
         Selection.activeGameObject = Road;
 
+        //if more than one road deselects the previous road so no more points can be added to it
         if(roads.Count > 1)
             {
                 roads[roads.Count-2].isSelected = false;
@@ -57,7 +61,7 @@ public class AddRoadButton : MonoBehaviour
         return Road;
     }
 
-
+    //Method to create a new road when create new road on hub is clicked
     public GameObject CreateNewRoad(Hub hub)
     {
         GameObject Road = new GameObject();
@@ -87,7 +91,7 @@ public class AddRoadButton : MonoBehaviour
         return Road;
     }
 
-
+    //Creates new road using the loaded data 
     public GameObject CreateNewRoad(RoadData loadedRoadData)
     {
         GameObject Road = new GameObject();
@@ -97,6 +101,7 @@ public class AddRoadButton : MonoBehaviour
         Road addedRoad = Road.GetComponent<Road>();
         addedRoad.material = sharedMaterial;
         addedRoad.roadData = new RoadData(loadedRoadData);
+        addedRoad.roadData.isSelected = true;
 
         Road.AddComponent<PathCreator>();
         Road.AddComponent<PathPlacer>();
@@ -117,9 +122,4 @@ public class AddRoadButton : MonoBehaviour
         
         return Road;
     }
-    public RoadData GetRoadData(GameObject Road)
-        {
-            return Road.GetComponent<RoadData>();
-        }
-
 }

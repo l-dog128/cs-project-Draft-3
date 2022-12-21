@@ -3,20 +3,22 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
-
+// Scrollbar for hub
 public class Scrollbar : MonoBehaviour
 {
-
+    // Refrence to slider
     public Slider slider;
+    // Refrencee to slider text
     public TextMeshProUGUI sliText;
-    float value;
+    // Refrence to parent hub
     Hub parentHub;
-    // Start is called before the first frame update
     void Start()
     {
+        // Gets hub and slider 
         parentHub = GetComponentInParent<Hub>();
         slider = GetComponent<Slider>();
         sliText = GameObject.Find("CPS Value").GetComponent<TextMeshProUGUI>();
+        // When value is changed change hub Cars per 10 value
         slider.onValueChanged.AddListener((v) => {
             sliText.text = v.ToString("0.00");
             parentHub.SetCpsValue(v);

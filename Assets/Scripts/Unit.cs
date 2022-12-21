@@ -1,108 +1,63 @@
 using UnityEngine;
+using UnityEditor;
 using System.Collections;
 using PathCreation;
 using System.Collections.Generic;
 
-public class Unit : MonoBehaviour {
-	const float MinTimeForNewPath = 0.2f;
-	const float MinimumMoveDst = 0.5f;
-
+public class Unit : MonoBehaviour
+{
+	//Refrence to target hub
 	public Hub targetHub;
-	public float startSpeed = 1f;
-	public float accerleration = 0.2f;
-	public float turnDst = 4f;
-	public float turnSpeed =8f;
-	float currentSpeed;
-	public Transform target;
-	Path PussyPath;
-	private float initialaztionTime;
-	private float ditanceTravelled;
-	List <PathCreator> pathCreators;
+	// Distance from point unit begins to turn
+	public float turnDst = 0.4f;
+	// Speed at which unit turns 
+	public float turnSpeed =1000f;
+	// Acceleration of hub
+	public float accerleration;
+	// MaxSpeed of hub
+	public float maxSpeed;
+	// Current speed of unit
+	public float currentSpeed;
+	// The points the unit will follow
+	public Vector3[] waypoints;
+	// The path it will follow
+	Path path;
+	// Start speed of hub
+	private float startSpeed = 2f;
+	private List<Unit> units;
+	
+	// Sets units and starts OnPathFound
 	void Start()
 	{
-		pathCreators = Camera.main.GetComponent<RoadManager>().pathCreators;
-		initialaztionTime = Time.timeSinceLevelLoad;
-		StartCoroutine(UpdatePath());
-	}
+		units = targetHub.units;
+		OnPathFound(waypoints);
 
-	IEnumerator UpdatePath()
+	}
+	// Method that Creates a new path and starts Follow path
+	void OnPathFound(Vector3[] waypoints) 
 	{
-		if(Time.timeSinceLevelLoad < 0.3f)
-		{
-			yield return new WaitForSeconds(0.3f);
-		}
-		PathRequestManager.RequestPath(transform.position,target.position,OnPathFound);
+		// Create a new path
+		path = new Path(waypoints,transform.position,turnDst);
+		//path = NewPath(waypoints);
 
-		float sqrMoveDist =  MinimumMoveDst * MinimumMoveDst;
-		Vector3 oldTargetPos = target.position;
-		while (true)
-		{
-			yield return new WaitForSeconds(MinTimeForNewPath);
-			if((target.position-oldTargetPos).sqrMagnitude>sqrMoveDist)
-			{
-				PathRequestManager.RequestPath(transform.position,target.position,OnPathFound);
-				oldTargetPos = target.position;
-			}
-
-		}
+		StopCoroutine("FollowPath");
+		StartCoroutine("FollowPath");
 	}
-
-
-    [ContextMenu("find path")]
-	void Findpath() {
-		PathRequestManager.RequestPath(transform.position,target.position, OnPathFound);
-	}
-
-	void OnPathFound(Vector3[] waypoints, bool pathSuccessful) {
-
-		
-		if (pathSuccessful) {
-			PussyPath = new Path(waypoints,transform.position,turnDst);
-			//path = NewPath(waypoints);
-			StopCoroutine("FollowPath");
-			StartCoroutine("FollowPath");
-		}
-		else
-		{
-			Debug.Log("bing");
-			Destroy(gameObject,0);
-		}
-	}
-
-	Vector3[] NewPath(Vector3[] oldPath)
-	{
-		List<Vector3> newPath = new List<Vector3>(); 
-		
-		foreach(Vector3 point in oldPath)
-		{
-			Vector3 UpdatedPoint = Vector3.positiveInfinity;
-
-			foreach(PathCreator pathCreator in pathCreators)
-			{
-				Vector3 P1 = pathCreator.path.GetClosestPointOnPath(point);
-
-				Vector3 Differnce = P1 - point;
-				if(Differnce.magnitude <  UpdatedPoint.magnitude)
-				{
-					UpdatedPoint = P1;
-				}
-			}
-			newPath.Add(UpdatedPoint);
-		}
-		
-		return newPath.ToArray();
-	}
-	
 	IEnumerator FollowPath() {
 
 		bool followingPath = true;
 		int pathIndex = 0;
-		transform.LookAt(PussyPath.lookPoints[0]);
-		while (followingPath) {
+		//look at first point in path 
+		transform.LookAt(path.lookPoints[0]);
+		while (followingPath) 
+		{
+			// Create new posistion of unit
 			Vector2 pos2d = new Vector2 (transform.position.x,transform.position.y);
-			while(PussyPath.turnBoundries[pathIndex].HasCrossedLine(pos2d))
+			// While the unit has crossed the line between the current and next points in the path 
+			while(path.turnBoundries[pathIndex].HasCrossedLine(pos2d))
 			{
-				if(pathIndex == PussyPath.finishLineIndex)
+				// If next index is last index then break else incrament path index
+				if(pathIndex == path.finishLineIndex)
 				{
 					followingPath = false;
 					break; 
@@ -112,18 +67,29 @@ public class Unit : MonoBehaviour {
 					pathIndex ++;
 				}
 			}
+			// if following the path 
 			if(followingPath)
 			{
-				float newSpeed = NewSpeed(startSpeed,Time.deltaTime);
-				Quaternion targetRot = Quaternion.LookRotation(PussyPath.lookPoints[pathIndex]- transform.position);
+				// calculate new speed and if it is greater than max speed set it to max Speed
+				currentSpeed = NewSpeed(startSpeed,Time.deltaTime);
+				if(currentSpeed > maxSpeed)
+				{
+					currentSpeed = maxSpeed;
+				}
+				// calculate the rotation of the unit , then roate it to look where it needs to go
+				Quaternion targetRot = Quaternion.LookRotation(path.lookPoints[pathIndex]- transform.position);
 				transform.rotation = Quaternion.Lerp(transform.rotation,targetRot,Time.deltaTime*turnSpeed);
-				transform.Translate(Vector3.forward * newSpeed , Space.Self);
+				//move forward to its next points
+				transform.Translate(Vector3.forward * currentSpeed , Space.Self);
+				
+				// reset its z coordinate
 				transform.position = new Vector3(transform.position.x,transform.position.y,-0.1f);
-				ditanceTravelled += (Mathf.Pow(newSpeed,2)-Mathf.Pow(startSpeed,2))/(2*accerleration);
 			}
+			// else has reached end 
 			else
 			{
-				targetHub.AddTargetSpeed(ditanceTravelled/(Time.timeSinceLevelLoad- initialaztionTime));
+				//remove from list and destory the game object
+				units.Remove(this);
 				Destroy(gameObject);
 			}
 
@@ -133,6 +99,21 @@ public class Unit : MonoBehaviour {
 		}
 	}
 
+	// Method which returns the current speed 
+	public float GetCurrentSpeed()
+	{
+		return currentSpeed;
+	} 
+
+	// Used in inspector to see the path the unit will take 
+	void OnDrawGizmosSelected()
+	{
+		for (int i = 1; i < path.lookPoints.Length; i++)
+		{
+			Gizmos.DrawLine(path.lookPoints[i-1],path.lookPoints[i]);
+		}
+	}
+	// Method to calculate new speed using SUVAT formaula v = u + at 
 	private float NewSpeed(float currentSpeed ,float time )
 	{
 		return (currentSpeed + accerleration * time);

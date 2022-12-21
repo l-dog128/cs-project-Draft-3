@@ -2,8 +2,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 [System.Serializable]
-public class RoadDataData 
+public class RoadDataSaveAble 
 {
+    // Refrences to all of the data that will be saved about the road
     public bool isSelected; 
     public float[] pointsX;
     public float[] pointsY;
@@ -12,10 +13,10 @@ public class RoadDataData
     public float firstPointX;
     public float firstPointY;
 
-    public RoadDataData(RoadData roadData)
+    // Constructor takes in road data 
+    public RoadDataSaveAble(RoadData roadData)
     {
         isSelected = roadData.isSelected;
-        timeSinceCreation = roadData.timeSinceCreation;
         connectedHub = roadData.ConnectedHub;
         firstPointX = roadData.FirstPoint.x;
         firstPointY= roadData.FirstPoint.y;
@@ -23,18 +24,14 @@ public class RoadDataData
         pointsX = roadData.ConvertVectorListToArray(roadData.points,true);
         pointsY = roadData.ConvertVectorListToArray(roadData.points,false);
     }
-    public void GetPoints()
-    {
-        Debug.Log(pointsX.Length);
-    }
-    public RoadData RoadDataDataToRoadData(RoadDataData roadDataData)
+    // Method that converts RoadDataSaveAble To RoadData
+    public RoadData RoadDataSaveAbleToRoadData(RoadDataSaveAble roadDataSaveAble)
     {
         RoadData roadData = new RoadData();
-        roadData.isSelected = roadDataData.isSelected;
-        roadData.points = roadData.CombineArrays(roadDataData.pointsX,roadDataData.pointsY);
-        roadData.timeSinceCreation = roadDataData.timeSinceCreation;
-        roadData.ConnectedHub = roadDataData.connectedHub;
-        roadData.FirstPoint = new Vector2(roadDataData.firstPointX,roadDataData.firstPointY);
+        roadData.isSelected = roadDataSaveAble.isSelected;
+        roadData.points = roadData.CombineArrays(roadDataSaveAble.pointsX,roadDataSaveAble.pointsY);
+        roadData.ConnectedHub = roadDataSaveAble.connectedHub;
+        roadData.FirstPoint = new Vector2(roadDataSaveAble.firstPointX,roadDataSaveAble.firstPointY);
         
         return roadData;
     }

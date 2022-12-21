@@ -1,13 +1,19 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class SimulateButton : MonoBehaviour
 { 
+    // Refrence to Result struct
+    public Results recentResult;
+    // Refrence to road manager
     RoadManager roadManager;
-    Results recentResult;
+    // Refrence to UI
     ResultsUI resultsUI;
+
+    // Method to set and create things that are needed 
     void Awake()
     {
         Button bttn = this.GetComponent<Button>();
@@ -18,7 +24,7 @@ public class SimulateButton : MonoBehaviour
         
         
     }
-
+    // Method that ends current simulation and starts new one when button is clicked 
     void Clicked()
     {
         Debug.Log("starting sim");
@@ -26,39 +32,32 @@ public class SimulateButton : MonoBehaviour
         StartCoroutine(Simuate());
     }
 
-
-    //set time in all hubs to zero and car count to zero done 
-    private void SetTimesAndCounts()
-    {
-        foreach(Hub hub in roadManager.hubs)
-        {
-            hub.SetStartTimeAndCarCount();
-        }
-    }
-
-    //actually do simulation 
+    // Method that does simulation 
     IEnumerator Simuate()
     {
         
-        // set material used and time count
+        // Set material used and Get Complextiy
         float materialUsed = GetMaterialUsed();
         int complexity = GetComplexity(materialUsed);
-        SetTimesAndCounts();
-        // wait ten senconds then get all the data back
+        float[] speeds = new float[5];
+        // Wait five senconds then get all the data back
         Time.timeScale = 4f;
         Debug.Log("fu fey show BING CHILLING" + Time.timeScale);
 
-        yield return new WaitForSecondsRealtime(5);
+        for(int i = 0 ; i < 5 ; i++)
+        {
+            float speedAtT = CalculateSpeed();
+            speeds[i] = speedAtT;
+            yield return new WaitForSecondsRealtime(1);
+        }
         Time.timeScale = 1f;
         Debug.Log("poo" + Time.timeScale);
 
-        //get arrived Cars and speed
-        float speed =CalculateSpeed();
+        // Update the created road class 
+        float meanSpeed = speeds.Sum()/speeds.Length;
+        recentResult.ModifyResults(complexity,materialUsed,meanSpeed*10);
 
-        // update the created road class 
-        recentResult.ModifyResults(complexity,materialUsed,speed);
-
-        // send results to ResultsUI and set the values
+        // Send results to ResultsUI and set the values
         resultsUI.RecieveResults(recentResult.GetResults());
         resultsUI.SetResults();
         resultsUI.ShowResults();
@@ -67,7 +66,7 @@ public class SimulateButton : MonoBehaviour
     } 
 
 
-    //get complexity/material used from road manager done
+    // Get material used from road manager 
     private float GetMaterialUsed()
     {
         float materialUsed = 0;
@@ -78,11 +77,12 @@ public class SimulateButton : MonoBehaviour
         return materialUsed;
 
     }
+    // Get Complexity used from road manager 
     private int GetComplexity(float materialUsed)
     {
         return (int)(materialUsed/roadManager.points.Count);
     }
-    //calculate average car speed 
+    // Calculate average car speed 
     private float CalculateSpeed()
     {
         var total = 0f;
@@ -94,14 +94,15 @@ public class SimulateButton : MonoBehaviour
     }
 
 }
-
+// Struct for resuts
 public class Results 
 {
     int _complexity;
     float _materialUsed;
     float _carSpeed;
     float _score;
-
+    
+    // Constructor sets all as zero so can be made in Awake()
     public Results()
     {
         _complexity = 0;
@@ -109,7 +110,7 @@ public class Results
         _carSpeed = 0;
         _score = 0;
     }
-
+    // Method to modify the results
     public void ModifyResults(int newComplexity, float newMaterialUsed, float newCarSpeed)
     {
         _complexity = newComplexity;
@@ -117,6 +118,7 @@ public class Results
         _carSpeed = newCarSpeed;
         _score = _carSpeed/_materialUsed;
     }
+    // Method that results results as an object array
     public object[] GetResults()
     {
         return new object[4]{_complexity,_materialUsed,_carSpeed,_score};

@@ -6,39 +6,35 @@ using PathCreation.Examples;
 public class Road : MonoBehaviour
 
 {
+    // Refrence to RoadMaterial
     public Material material;
+    // Refrence to PathCreator and PathPlacer
     public PathCreator pathCreator;
     public PathPlacer pathPlacer;
-    public MeshCollider meshCollider;
+    // Refrence to MeshCreator
     public RoadMeshCreator roadMeshCreator;
-    public bool connectedHub;
+    // Is the roadCloses
     bool isClosed = false;
+    // How long user must wait before new point can be added
     float timeSinceCreation = 0.25f;
-     
+    // The road datt attached to this road
     public RoadData roadData;
-    public List<Vector2> points;
     void Start()
     {
+        // Get list of pathCreators
         List<PathCreator> pathCreators = Camera.main.GetComponent<RoadManager>().pathCreators;
-
-        meshCollider = GetComponent<MeshCollider>(); 
+        //Add Components
         roadMeshCreator = GetComponent<RoadMeshCreator>();
         pathCreator = GetComponent<PathCreator>();
         pathPlacer = GetComponent<PathPlacer>();
 
-        
-        
-
-        //set settings 
-
-
+        // Set settings 
         pathCreators.Add(pathCreator);
 
         pathPlacer.spacing = 0.9f;
         pathPlacer.holder = new GameObject("RoadSegmentHolder");
         pathPlacer.holder.transform.SetParent(this.gameObject.transform);
 
-        
         roadMeshCreator.roadWidth = 1f;
         roadMeshCreator.thickness = 0.5f;
         roadMeshCreator.textureTiling = 2f;
@@ -47,7 +43,7 @@ public class Road : MonoBehaviour
         roadMeshCreator.undersideMaterial = material;
         
         
-        //check if connected to a hub if so set first and second point at hub and makes sure there isnt already a first ponint
+        // Check if connected to a hub if so set first and second point at hub and makes sure there isnt already a first ponint
         if(roadData.ConnectedHub == true)
         {
             Vector2 firstPoint = roadData.FirstPoint;
@@ -68,39 +64,41 @@ public class Road : MonoBehaviour
 
     void Update()
     {
+        // If the road is selcected And has 2 or more points create a new bezier path
         if(roadData.isSelected == true)
         {
             if(roadData.points.Count > 1)
             {
                 pathCreator.bezierPath = bezierPath(roadData.points.ToArray(),isClosed);
-                UpdateMeshCollider();
             }
 
-
+            // Check if new point has been added 
             StopCoroutine(NewRoadPoint());
             StartCoroutine(NewRoadPoint());
-            //change points to points 2d if doesnt work 
-            points = roadData.points;
+            // Gets the spaced points from bezier path
             roadData.spacedPoints = GetSpacedPoints();
         }
         
     }
+    // Method that gets the spaced points 
     public List<Vector2> GetSpacedPoints()
     {
         return pathPlacer.GetSpacedPoints();
     }
 
+    // Method that checks if left mouse button has been clicked 
     IEnumerator NewRoadPoint()
     {
         if(Input.GetMouseButtonUp(0))
         {
             Vector3 screenPos = Input.mousePosition;
             var pos = Camera.main.ScreenToWorldPoint(screenPos);
-            if(!(pos.x < -62f || (pos.x > 55f && pos.y < -42f)))
+            // Convert Mouse pos to screenpos
+            // check that posistion isnt on one of the buttons if not add a new point 
+            if(!((pos.x < -47 && pos.y > 40) || (pos.x > 50 && pos.y < -41)))
             {
                 roadData.points.Add(new Vector2(pos.x,pos.y));
                 yield return new WaitForSeconds(timeSinceCreation);
-                
             }
             else
             {
@@ -114,16 +112,9 @@ public class Road : MonoBehaviour
             yield return null;
         }
     }
-
+    // method that creates a new bezier path
     public BezierPath bezierPath(Vector2[] points, bool isClosed )
     {
         return new BezierPath(points,isClosed,PathSpace.xy);
     }
-
-    void UpdateMeshCollider()
-    {
-        meshCollider.sharedMesh = roadMeshCreator.mesh;
-
-    }
-
 }

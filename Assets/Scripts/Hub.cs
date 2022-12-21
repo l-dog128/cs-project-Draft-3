@@ -16,47 +16,48 @@ public class Hub : MonoBehaviour
 
 
     */
-    [Range(0,3)]
-    public int orientation;
+    // Refrence to colour of Hub
     public Color colour;
+    // Refrence to if hub has been clicked 
     public bool clicked = false;
+    // Refrence to if should close UI
     public bool closeUi = false;
-    public float GlobalTurnDst=4f;
-    public float GlobalTurnSpeed=10f;
-    public AddRoadButton ABR;
-    GameObject hubUi;
+    // Refrence to AddRoadButton Script
+    public AddRoadButton ARB;
+    // Refrence to all the units  
+    public List<Unit> units;
+    // Refrence to the UI
     GameObject UI;
+    // Refrence to helpbutton UI
     GameObject HelpUI;
+    // Refrence to CarSpawner
     CarSpawnerManager carSpawnerManager;
+    // Refrence to RoadManager
     RoadManager RoadManager;
+    // Refrence to hubpathLink
     HubPathLink hubPathLink;
+    // How many cars hub should spawn per 10 seconds
     float CarsPer10;
-    public int arrivedCars;
+    // Refrence to spriteRenderer
     SpriteRenderer spriteRenderer;
-    float startTime;
 
-    List<int> avgSpeed;
-
-    
-    
-    
-
-
-
+    // Method that sets and create things as needed     
     void Awake()
     {
+
         RoadManager = Camera.main.GetComponent<RoadManager>();
         RoadManager.hubs.Add(this);
         //Camera.main.GetComponent<RoadManager>().hubs.Add(this);
 
+
         carSpawnerManager = Camera.main.GetComponent<CarSpawnerManager>();
-        hubUi = Camera.main.GetComponent<materialHolder>().GetHubUi();
-        ABR = Camera.main.GetComponent<AddRoadButton>();
+        ARB = Camera.main.GetComponent<AddRoadButton>();
         hubPathLink = new HubPathLink(this);
         HelpUI = Camera.main.GetComponent<materialHolder>().HelpUi;
+        units = new List<Unit>();
 
         
-        UI =Instantiate(hubUi,gameObject.transform.position,Quaternion.identity);
+        UI =Instantiate(Camera.main.GetComponent<materialHolder>().hubUi,gameObject.transform.position,Quaternion.identity);
         UI.transform.SetParent(gameObject.transform);
         UI.SetActive(false);
         CarsPer10 = 2.5f;
@@ -72,15 +73,11 @@ public class Hub : MonoBehaviour
             spriteRenderer.color = colour;
         } 
 
-        avgSpeed = new List<int>();
-
         StartCoroutine(CheckAndSpawnCars());
         
     }
 
-
-
-
+    // Method that closes help ui and actives hub UI when hub is clicked
     void OnMouseUp()
     {
         HelpUI.SetActive(false);
@@ -90,12 +87,14 @@ public class Hub : MonoBehaviour
 
     void Update()
     {
+        // checks if close button is pressed and closes hub UI if true
         if(closeUi == true)
         {
             UI.SetActive(false);
             HelpUI.SetActive(true);
             closeUi = false;
         }
+        // checks if new road button has been clicked
         if(clicked == true )
         {
             NewRoad();
@@ -108,78 +107,55 @@ public class Hub : MonoBehaviour
   
     IEnumerator CheckAndSpawnCars()
     {
-        List<Hub> mostRecentHubs = RoadManager.hubs;
-        yield return new WaitForSeconds(10/(CarsPer10*2));
         while(true)
         {
-            foreach(Hub hub in mostRecentHubs)
+            yield return new WaitForSeconds(5/(CarsPer10));
+            // Loops through every hub 
+            foreach(Hub hub in RoadManager.hubs.ToList())
             {
+                // Checks isnt this hub
                 if(hub != this)
                 {
+                    // Trys to add a path connecting this hub and other hub
+                    // if there is a path request a new spawn  
                     hubPathLink.TryAddPath(hub);
                     if(hubPathLink.ConnectedPath(hub))
                     {
-                        CarSpawnerManager.RequestSpawn(this,hub);
-                        yield return new WaitForSeconds(5/(CarsPer10*2)); 
+                        CarSpawnerManager.RequestSpawn(this,hub,hubPathLink.GetPathForHub(hub));
+                        yield return new WaitForSeconds(5/(CarsPer10)); 
                     }
                 }
             }
-            yield return new WaitForSeconds(5/(CarsPer10*2));
+            yield return new WaitForSeconds(5/(CarsPer10));
         }
         
     }
-    void PathFound(Vector3[] path , bool succsess)
+    // Method to create a new car 
+    // takes in target hub type of car and path the car will take 
+    public void CreateNewCar(Hub targethub,CarType type,Vector3[] waypoints)
     {
-        UnityEngine.Debug.Log(succsess);
-    }
-
-
-
-  
-    public Vector3[] ComparePathLengths(Vector3[] path1, Vector3[] path2)
-    {
-        float len1 = 0;
-        float len2 = 0;
-
-        //calucate length of path 
-        for(int i = 1; i < path1.Length-1;i++)
-        {
-            len1 = len1 + Vector3.SqrMagnitude(path1[i]-path1[i-1]);
-        }
-        for(int i = 1; i < path2.Length-1;i++)
-        {
-            len2 = len2 + Vector3.SqrMagnitude(path2[i]-path2[i-1]);
-        }
-
-        if(len1 > len2)
-        {
-            return path2; 
-        }
-        else
-        {
-            return path1;
-        }
-    }
-
-    public void CreateNewCar(Hub targethub)
-    {
-        GameObject car = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        // Creates new shape and names it 
+        GameObject car = GameObject.CreatePrimitive(type._shape);
         car.name = "car";
-        
 
+        // Add unit componet and set target acceleration and speed and path
         Unit unit = car.AddComponent<Unit>();
         unit.targetHub = targethub;
-        unit.target = targethub.transform;
-        unit.turnDst = GlobalTurnDst;
-        unit.turnSpeed = GlobalTurnSpeed;
+        unit.accerleration = type._accerleration;
+        unit.maxSpeed = type._maxSpeed;
 
+        unit.waypoints = waypoints;
 
+        // Set posistion and size
         car.transform.position = gameObject.transform.position;
         car.transform.SetParent(gameObject.transform);
         car.transform.localScale = Vector3.one * 0.1f;
 
-        
 
+        // Add this car to the target hub units list 
+        targethub.units.Add(unit);
+        
+        // Add renderer and set colour to target hubs colour
         var renderer = car.GetComponent<Renderer>();
         renderer.material.SetColor("_Color",targethub.colour);
         renderer.material.SetColor("_EmissionColor",targethub.colour);
@@ -190,37 +166,44 @@ public class Hub : MonoBehaviour
         fieldOfView.viewRadius = 10f;
         fieldOfView.viewAngle = 60f;
         
-        
+        // Tells car spawner manager that finished spawing car 
         carSpawnerManager.FinishedSpawningCar(true);
 
     }
-
+    // Method to create a new road 
     void NewRoad()
     {
-        ABR.CreateNewRoad(this);
+        ARB.CreateNewRoad(this);
     }
-
-    public Vector2 Posistion2D()
-    {
-        return new Vector2(gameObject.transform.position.x,gameObject.transform.position.y);
-    }
-
+    // Method that sets CarsPer10 value
     public void SetCpsValue(float value)
     {
         CarsPer10 = value;
     }
-
-    public void SetStartTimeAndCarCount()
-    {
-        startTime = Time.time;
-        arrivedCars = 0;
-    }
-    public void AddTargetSpeed(float speed)
-    {
-        avgSpeed.Add((int)speed);
-    }
+    // Method that gets mean speed for all cars 
     public float GetAverageSpeed()
     {
-        return(avgSpeed.Sum());
+        float total = 0;
+        foreach(Unit car in units)
+        {
+            total +=car.GetCurrentSpeed();
+        }
+        return total/units.Count;
+    }
+}
+// Struct for the CarType 
+public struct CarType
+{
+    string _name;
+    public PrimitiveType _shape;
+    public float _maxSpeed;
+    public float _accerleration;
+    // Constructor
+    public CarType(string name , PrimitiveType shape ,float maxSpeed , float accerleration)
+    {
+        _name = name;
+        _shape = shape;
+        _maxSpeed = maxSpeed;
+        _accerleration = accerleration;
     }
 }

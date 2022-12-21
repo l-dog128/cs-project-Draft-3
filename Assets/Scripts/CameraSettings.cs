@@ -2,6 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+
+//script that sets the camera size ready for the grid
 public class CameraSettings : MonoBehaviour
 {
     public Vector2 size;

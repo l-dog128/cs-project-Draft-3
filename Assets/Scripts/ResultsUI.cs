@@ -6,8 +6,11 @@ using TMPro;
 
 public class ResultsUI : MonoBehaviour
 {
+    // Refrence to if is selected 
     public bool selected;
+    // Refrence to thr results 
     object[] results;
+    // Refrences to GameObjects that show the results
     GameObject[] resultsArray;
     void Start()
     {
@@ -20,6 +23,7 @@ public class ResultsUI : MonoBehaviour
         }
     }
 
+    // Checks if user presses button C
     void Update()
     {
         if(Input.GetKeyUp(KeyCode.C))
@@ -27,7 +31,7 @@ public class ResultsUI : MonoBehaviour
             this.CloseUI();
         }
     }
-    //get results from simulate button
+    // Method that gets results from simulate button
     public void RecieveResults(object[] _results)
     {
         results[0] = _results[2]; 
@@ -38,9 +42,7 @@ public class ResultsUI : MonoBehaviour
     // Set values
     public void SetResults()
     {
-
-        
-
+        // Get values from results array
         var speedValue = resultsArray[0].GetComponent<TextMeshProUGUI>();
         var materialValue = resultsArray[1].GetComponent<TextMeshProUGUI>();
         var complexityValue = resultsArray[2].GetComponent<TextMeshProUGUI>();
@@ -53,24 +55,16 @@ public class ResultsUI : MonoBehaviour
         //calulate score speed/cost 
         var scoreValue = resultsArray[3].GetComponent<TextMeshProUGUI>();
         scoreValue.text = results[3].ToString();
-
-        //if(materialValue.text.Length >)
     }
-    //show UI
+    // Method that shows UI
     public void ShowResults()
     {
         gameObject.SetActive(true);
     }
 
-    //close when clicked 
+    // Method that closes when clicked 
     public void CloseUI()
     {
         gameObject.SetActive(false);
-    }
-
-    [ContextMenu("check thing")]
-    private void AAAAA()
-    {
-        Debug.Log(resultsArray.Length);
     }
 }

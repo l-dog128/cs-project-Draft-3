@@ -5,10 +5,11 @@ using UnityEngine;
 
 public class Grid : MonoBehaviour
 {
+    //bool to display grid 
     public bool displayGrid;
-    public LayerMask walkableMask;
     public Vector2 gridWorldSize;
     public float nodeRadius;
+    //Refrence to array of nodes make up grid 
     Node[,] grid;
 
     float nodeDiameter;
@@ -17,6 +18,7 @@ public class Grid : MonoBehaviour
     
     Vector2[] points;
 
+    //Sets values for variables and creates a new grid 
     void Awake()
     {
         nodeDiameter = nodeRadius *2;
@@ -25,12 +27,12 @@ public class Grid : MonoBehaviour
         gridWorldSize = new Vector2(gridSizeX,gridSizeY);
         CreateGrid();
     }
-
     void Update()
     {
         CreateGrid();
     }
 
+    //Getter for MaxSize 
     public int MaxSize
     {
         get
@@ -38,6 +40,7 @@ public class Grid : MonoBehaviour
             return gridSizeX *gridSizeY;
         }
     }
+
     void CreateGrid()
     {
         grid = new Node[gridSizeX,gridSizeY];
