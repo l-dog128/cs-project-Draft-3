@@ -50,13 +50,13 @@ public class PathRequestManager : MonoBehaviour
     }
 
     // Struct for a path request
-    // callback used to return if path has been found and if so the path its self 
+    // callback used to return if path has been found and if so the path is set 
     struct PathRequest
     {
         public Vector3 pathStart;
         public Vector3 pathEnd;
         public Action<Vector3[],bool> callback;
-        // Constructor
+    
         public PathRequest(Vector3 _start, Vector3 _end , Action<Vector3[],bool> _callback)
         {
             pathStart =_start;
