@@ -97,6 +97,7 @@ public static class SaveAndLoad
         // Create new .txt file 
         path = path + "/results.txt";
         StreamWriter writer = new StreamWriter(path,true);
+        writer.WriteLine("---------------");
         writer.WriteLine("Complexity" +": " + results[0].ToString());
         writer.WriteLine("Material Used" +": " + results[1].ToString() + " Tons");
         writer.WriteLine("Speed" +": " + results[2].ToString());

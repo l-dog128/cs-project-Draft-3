@@ -1,9 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 using PathCreation;
-
-
-
 public class RoadManager : MonoBehaviour
 {
     // Refrebce to pathCreators which make the roads 
@@ -16,16 +13,15 @@ public class RoadManager : MonoBehaviour
     public List<Vector2> pointsList;
     // Refrence to all the hubs
     public List<Hub> hubs;
+    // Refrence to a hub with a menu active 
+    public Hub activeHub;
+    public bool HubActive;
 
     [ContextMenu("road count")]
     void blah()
     {
         Debug.Log(roads.Count);
     }
-    // Refrence to currently selected road 
-    private RoadData currentRoad;
-    // Refrence to not selected road
-    private RoadData NotSelectRoad;
 
     // Refrence to AddRoadButton and AddRoadHub
     private AddRoadButton addRoadButton;
@@ -39,10 +35,10 @@ public class RoadManager : MonoBehaviour
         roads = new List<RoadData>();
     }
     void Update()
-    {
-        // 
+    { 
         int PointsBefore = points.Count;
         UpdatePoints();
+    
     }
     // Method that updates the points list
     private void UpdatePoints()
@@ -58,7 +54,7 @@ public class RoadManager : MonoBehaviour
                     points.Add(hub.transform.position);
                 }
             }
-            // Cdd each segment of road
+            // Add each segment of road
             for(int i = 0; i < roads.Count;i++)
             {
                 //Change points 
@@ -84,5 +80,7 @@ public class RoadManager : MonoBehaviour
     {
         GameObject newRoad = addRoadButton.CreateNewRoad(roadData);
     }
+
+    //Method to Destory a new road 
     
 }

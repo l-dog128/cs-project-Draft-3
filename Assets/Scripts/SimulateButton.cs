@@ -8,6 +8,8 @@ public class SimulateButton : MonoBehaviour
 { 
     // Refrence to Result struct
     public Results recentResult;
+    // Currently simulaitng 
+    public bool isSimulating;
     // Refrence to road manager
     RoadManager roadManager;
     // Refrence to UI
@@ -35,21 +37,19 @@ public class SimulateButton : MonoBehaviour
     // Method that does simulation 
     IEnumerator Simuate()
     {
-        
-        // Set material used and Get Complextiy
-        float materialUsed = GetMaterialUsed();
-        int complexity = GetComplexity(materialUsed);
+        isSimulating = true;
         float[] speeds = new float[5];
         // Wait five senconds then get all the data back
         Time.timeScale = 4f;
-        Debug.Log("fu fey show BING CHILLING" + Time.timeScale);
-
         for(int i = 0 ; i < 5 ; i++)
         {
             float speedAtT = CalculateSpeed();
             speeds[i] = speedAtT;
             yield return new WaitForSecondsRealtime(1);
         }
+        // Set material used and Get Complextiy
+        float materialUsed = GetMaterialUsed();
+        int complexity = GetComplexity(materialUsed);
         Time.timeScale = 1f;
         Debug.Log("poo" + Time.timeScale);
 
@@ -61,7 +61,6 @@ public class SimulateButton : MonoBehaviour
         resultsUI.RecieveResults(recentResult.GetResults());
         resultsUI.SetResults();
         resultsUI.ShowResults();
-        
 
     } 
 
@@ -74,13 +73,13 @@ public class SimulateButton : MonoBehaviour
         {
             materialUsed = materialUsed + point.sqrMagnitude;
         }
-        return materialUsed;
+        return materialUsed/1000;
 
     }
     // Get Complexity used from road manager 
     private int GetComplexity(float materialUsed)
     {
-        return (int)(materialUsed/roadManager.points.Count);
+        return (int)(materialUsed * 500/roadManager.points.Count);
     }
     // Calculate average car speed 
     private float CalculateSpeed()
@@ -90,7 +89,12 @@ public class SimulateButton : MonoBehaviour
         {
             total += hub.GetAverageSpeed();
         }
-        return(total/roadManager.hubs.Count);
+        if(roadManager.hubs.Count == 0)
+        {
+            return 0f;
+        }
+        float final = total/roadManager.hubs.Count;
+        return(final*10);
     }
 
 }
@@ -116,7 +120,7 @@ public class Results
         _complexity = newComplexity;
         _materialUsed = newMaterialUsed;
         _carSpeed = newCarSpeed;
-        _score = _carSpeed/_materialUsed;
+        _score = 100 * _carSpeed/_materialUsed;
     }
     // Method that results results as an object array
     public object[] GetResults()

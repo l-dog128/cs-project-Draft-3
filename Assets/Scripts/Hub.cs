@@ -26,6 +26,7 @@ public class Hub : MonoBehaviour
     public AddRoadButton ARB;
     // Refrence to all the units  
     public List<Unit> units;
+    
     // Refrence to the UI
     GameObject UI;
     // Refrence to helpbutton UI
@@ -77,12 +78,20 @@ public class Hub : MonoBehaviour
         
     }
 
-    // Method that closes help ui and actives hub UI when hub is clicked
+    // Method that checks if there is a menu open if so cloeses it 
+    // then closes the helpUI
+    // then sets this hubs UI visable and sets that a menu is open
+    // and this is the hub with it open
     void OnMouseUp()
     {
+        if (RoadManager.activeHub != null)
+        {
+            RoadManager.activeHub.UI.SetActive(false);
+        }
         HelpUI.SetActive(false);
         UI.SetActive(true);
-        
+        RoadManager.HubActive = true;
+        RoadManager.activeHub = this;
     }
 
     void Update()
@@ -91,6 +100,7 @@ public class Hub : MonoBehaviour
         if(closeUi == true)
         {
             UI.SetActive(false);
+            RoadManager.HubActive = false;
             HelpUI.SetActive(true);
             closeUi = false;
         }
@@ -187,6 +197,11 @@ public class Hub : MonoBehaviour
         foreach(Unit car in units)
         {
             total +=car.GetCurrentSpeed();
+            
+        }
+        if(units.Count == 0)
+        {
+            return 0f;
         }
         return total/units.Count;
     }

@@ -8,8 +8,11 @@ public class LoadButton : MonoBehaviour
     //The input field 
     public GameObject inputFieldGameObject;
 
-    // the inputfield button 
+    // The inputfield button 
     public InputFieldButton inputFieldButton;
+
+    // The simulation button
+    public SimulateButton simulateButton;
     void Awake()
     {
         // Get a reference to the button component attached to this game object
@@ -21,10 +24,15 @@ public class LoadButton : MonoBehaviour
 
     private void click()
     {
-        //sets the input field to active and sets the button to load mode 
-        inputFieldGameObject.SetActive(true);
-        inputFieldButton.setting = true;
+        // checks if not  currenttly simulating 
+        if(!simulateButton.isSimulating)
+        {
+            //sets the input field to active and sets the button to load mode 
+            inputFieldGameObject.SetActive(true);
+            inputFieldButton.setting = true;
 
-        inputFieldButton.IsSavingOrLoading = true;    
+            inputFieldButton.IsSavingOrLoading = true;    
+        }
     }
+        
 }

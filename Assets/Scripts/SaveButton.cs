@@ -11,6 +11,8 @@ public class SaveButton : MonoBehaviour
 
     // The inputfield button 
     public InputFieldButton inputFieldButton;
+    // The simulation button
+    public SimulateButton simulateButton;
     void Awake()
     {
         // Get a reference to the button component attached to this game object
@@ -21,10 +23,14 @@ public class SaveButton : MonoBehaviour
     // This function will be called when the button is clicked
     private void click()
     {
-        // Tets the input field to active and sets the button to save mode 
-        inputFieldGameObject.SetActive(true);
-        inputFieldButton.setting = false;    
+        // checks if not  currenttly simulating 
+        if(!simulateButton.isSimulating)
+        {
+            //sets the input field to active and sets the button to load mode 
+            inputFieldGameObject.SetActive(true);
+            inputFieldButton.setting = false;
 
-        inputFieldButton.IsSavingOrLoading = true;
+            inputFieldButton.IsSavingOrLoading = true;    
+        }
     }
 }

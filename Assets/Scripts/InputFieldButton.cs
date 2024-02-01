@@ -5,7 +5,7 @@ using System.IO;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
-
+using PathCreation;
 public class InputFieldButton : MonoBehaviour
 {
     // The input field 
@@ -24,7 +24,8 @@ public class InputFieldButton : MonoBehaviour
     private string path;
     //the simulate button from which the results are gotten from
     public SimulateButton simulateButton;
-
+    
+    public string recentSavePath;
     public bool IsSavingOrLoading;
     void Start()
     {
@@ -33,7 +34,6 @@ public class InputFieldButton : MonoBehaviour
         parentGameObject.SetActive(isActive);
         IsSavingOrLoading = false;
     }
-
     // Get the value in the input field and set it to blank
     // then call the method depending on the mode 
     void Clicked()
@@ -51,51 +51,84 @@ public class InputFieldButton : MonoBehaviour
         }
     }
     
+    [ContextMenu("check if work")]
+    void check()
+    {
+        Debug.Log(recentSavePath);
+    }
     private IEnumerator Save()
     {
+        // Check the input is valid by making sure it has a valid ascii type
+        foreach(char c in userInput)
+        {
+            if(! ((c >= 65 && c<=90)||(c >=97 && c <=122)))// if not(lower or upper) 
+            {
+                if(!(c >= 48 && c <= 57)) // isn't a number 
+                {
+                    inputField.text = "Invalid Input";
+                    IsSavingOrLoading = false; 
+                    parentGameObject.SetActive(false);
+                    yield return null;
+                }
+            
+            }
+            
+        }
         //Combine the input and application directory to create a path
         string path = System.IO.Path.Combine(Application.persistentDataPath,userInput);
         //checks if the path exsists if it does change name 
         if(!Directory.Exists(path))
         {
             DirectoryInfo folder = Directory.CreateDirectory(path);
-
-            //gets components from the road manager and saves them
-            List<RoadData> roads = Camera.main.GetComponent<RoadManager>().roads;
-            List<Hub> hubs = Camera.main.GetComponent<RoadManager>().hubs;
-            
-            //gets components from results if there is any 
-            object[] recentResult = simulateButton.recentResult.GetResults();
-
-
-            // loop through all of the hubs and roads saving them 
-            int x = 0;
-            int y = 0;
-            foreach(RoadData road in roads)
-            {
-                SaveAndLoad.SaveData(road,x,path);
-                x += 1;
-            }
-            foreach(Hub hub in hubs)
-            {
-                SaveAndLoad.SaveHubs(hub,y,path);
-                y += 1;
-            }
-            //saves the results 
-            SaveAndLoad.SaveSimulationResults(path,recentResult);
-            //change the text to show has been saved 
-            inputField.text = "Saved Succsessfully";
+            SaveData(path);
         }
         else
         {
-            inputField.text = "file already named that";
+            //checks path exsits and is is the same as the recent save path
+            if(Directory.Exists(path) && (recentSavePath == path))
+            {
+                SaveData(recentSavePath);
+            }
+            else
+            {
+                inputField.text = "file already exsits";
+            }
+            
         }
         yield return new WaitForSecondsRealtime(2f);
         IsSavingOrLoading = false; 
         parentGameObject.SetActive(false);
         yield return null;
     }
-
+    private void SaveData(string path)
+    {
+        //gets components from the road manager and saves them
+        List<RoadData> roads = Camera.main.GetComponent<RoadManager>().roads;
+        List<Hub> hubs = Camera.main.GetComponent<RoadManager>().hubs;
+        //gets components from results if there is any 
+        object[] recentResult = simulateButton.recentResult.GetResults();
+        // loop through all of the hubs and roads saving them 
+        int x = 0;
+        int y = 0;
+        foreach(RoadData road in roads)
+        {
+            SaveAndLoad.SaveData(road,x,path);
+            x += 1;
+        }
+        foreach(Hub hub in hubs)
+        {
+            SaveAndLoad.SaveHubs(hub,y,path);
+            y += 1;
+        }
+        //saves the results if not zero
+        if(!((int)recentResult[0] == 0))
+        {
+            SaveAndLoad.SaveSimulationResults(path,recentResult);
+        }
+        //change the text to show has been saved
+        recentSavePath = path;
+        inputField.text = "Saved Succsessfully";
+    }
     private void Load()
     {
         //Combine the input and application directory
@@ -118,25 +151,37 @@ public class InputFieldButton : MonoBehaviour
                     roadManager.hubs.Remove(hub);
                     UnityEngine.Object.Destroy(hub.gameObject);
                 }
-                //deletes all the roads 
-                foreach(RoadData road in roadManager.roads.ToArray())
+                //deletes all the roads by removing all of the points 
+                // then creates an itential list which loops through all path creators
+                // remove the path creator from the list 
+                roadManager.roads.Clear();
+                roadManager.points.Clear();
+                List<PathCreator> pathC = new List<PathCreator>();
+                pathC = roadManager.pathCreators;
+                foreach(PathCreator pathCreator in pathC.ToArray())
                 {
-                    roadManager.roads.Remove(road);
-                    
+                    Destroy(pathCreator.gameObject);
+                    roadManager.pathCreators.Remove(pathCreator);
                 }
                 //starts coroutine to load hubs 
                 LoadHubs(path);
                 //starts coroutine to load roads
                 StartCoroutine(LoadRoad());
             }
+            else
+            {
+                inputField.text = "invalid input";
+            }
         }
-        catch(Exception)
+        catch(Exception e)
         {
-            inputField.text = "file doesnt exsist";
+            Debug.LogError(e);
+            inputField.text = "error";
+            
         }
+        recentSavePath = path;
         IsSavingOrLoading = false;
     }
-
     //Coroutine to load Roads
     private IEnumerator LoadRoad()
     {
@@ -155,7 +200,7 @@ public class InputFieldButton : MonoBehaviour
                 roadManager.CreateNewRoad(loadedData);
             }
             catch (System.Exception)
-            { 
+            {
                 break;
             }
             
@@ -166,7 +211,6 @@ public class InputFieldButton : MonoBehaviour
         parentGameObject.SetActive(false);
         yield return null;
     }
-
     //Coroutine to load hubs 
     private void LoadHubs(string path)
     {
@@ -190,5 +234,4 @@ public class InputFieldButton : MonoBehaviour
             x += 1;
         }
     }
-
 }

@@ -7,9 +7,7 @@ public class Heap<T> where T : IHeapItem<T>
 {
     // Array to store the items in the heap
     T[] items;
-    // Current number of items in the heap
     int currentItemCount;
-    // Constructor that initializes the items array with the specified size
     public Heap(int maxHeapSize)
     {
         items = new T[maxHeapSize];
@@ -33,7 +31,7 @@ public class Heap<T> where T : IHeapItem<T>
         // Store the first item
         T firstItem = items[0];
         // Decrease the item count
-        currentItemCount --;
+        currentItemCount--;
         // Replace the first item with the last item in the array
         items[0] = items[currentItemCount];
         // Set the heap index of the new first item to 0
@@ -62,33 +60,33 @@ public class Heap<T> where T : IHeapItem<T>
     public bool Contains(T item)
     {
         // Compare the item to the item at its heap index in the array
-        return Equals(items[item.HeapIndex],item);
+        return Equals(items[item.HeapIndex], item);
     }
     // Restore the heap property by sorting the item down
     void SortDown(T item)
     {
         // Loop until the heap property is satisfied
-        while(true)
+        while (true)
         {
             // Calculate the indices of the item's children
             int childIndexLeft = item.HeapIndex * 2 + 1;
             int childIndexRight = item.HeapIndex * 2 + 2;
             int swapIndex = 0;
             //
-            if(childIndexLeft < currentItemCount)
+            if (childIndexLeft < currentItemCount)
             {
                 swapIndex = childIndexLeft;
-                if(childIndexRight < currentItemCount)
+                if (childIndexRight < currentItemCount)
                 {
-                    if(items[childIndexLeft].CompareTo(items[childIndexRight])<0)
+                    if (items[childIndexLeft].CompareTo(items[childIndexRight]) < 0)
                     {
                         swapIndex = childIndexRight;
                     }
                 }
-            
-                if(item.CompareTo(items[swapIndex])<0)
+
+                if (item.CompareTo(items[swapIndex]) < 0)
                 {
-                    Swap(item,items[swapIndex]);
+                    Swap(item, items[swapIndex]);
                 }
                 else
                 {
@@ -99,23 +97,22 @@ public class Heap<T> where T : IHeapItem<T>
             {
                 return;
             }
-               
+
 
         }
     }
     // Restore the heap property by sorting the item up
     void SortUp(T item)
     {
-        int parentIndex = (item.HeapIndex -1) /2;
+        int parentIndex = (item.HeapIndex - 1) / 2;
 
-        while(true)
+        while (true)
         {
-            // Calculate the index of the item's parent
             T parentItem = items[parentIndex];
             //Compares the items and swaps them 
-            if(item.CompareTo(parentItem)>0)
+            if (item.CompareTo(parentItem) > 0)
             {
-                Swap(item,parentItem);
+                Swap(item, parentItem);
             }
             else
             {
@@ -135,7 +132,6 @@ public class Heap<T> where T : IHeapItem<T>
         itemB.HeapIndex = itemAIndex;
     }
 }
-// Interface for items in the heap
 public interface IHeapItem<T> : IComparable<T>
 {
     // Property to get and set the heap index of the item

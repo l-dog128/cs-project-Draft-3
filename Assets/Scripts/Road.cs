@@ -17,8 +17,14 @@ public class Road : MonoBehaviour
     bool isClosed = false;
     // How long user must wait before new point can be added
     float timeSinceCreation = 0.25f;
-    // The road datt attached to this road
+    // The road data attached to this road
     public RoadData roadData;
+
+    [ContextMenu("GetNpoints")]
+    void N()
+    {
+        Debug.Log(roadData.points.Count);
+    }
     void Start()
     {
         // Get list of pathCreators
@@ -60,6 +66,7 @@ public class Road : MonoBehaviour
             }
             
         }
+        
     }
 
     void Update()
@@ -95,7 +102,7 @@ public class Road : MonoBehaviour
             var pos = Camera.main.ScreenToWorldPoint(screenPos);
             // Convert Mouse pos to screenpos
             // check that posistion isnt on one of the buttons if not add a new point 
-            if(!((pos.x < -47 && pos.y > 40) || (pos.x > 50 && pos.y < -41)))
+            if(!((pos.x < -47 && pos.y > 40) || (pos.x > 50 && pos.y < -41) ||(Camera.main.GetComponent<RoadManager>().HubActive && pos.x < -47)))
             {
                 roadData.points.Add(new Vector2(pos.x,pos.y));
                 yield return new WaitForSeconds(timeSinceCreation);

@@ -13,8 +13,7 @@ public class RoadData
     public List<Vector2> spacedPoints;
     // Is the road connected to a hub and if it is first point is the hubs location 
     public bool ConnectedHub = false;
-    public Vector2 FirstPoint;
-
+    public Vector2 FirstPoint; 
     // Constructor / initializer for the class 
     public RoadData()
     {

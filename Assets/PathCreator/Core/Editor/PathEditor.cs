@@ -428,74 +428,77 @@ namespace PathCreationEditor {
         }
 
         void DrawBezierPathSceneEditor () {
+            if(creator != null)
+            {
+                bool displayControlPoints = data.displayControlPoints && (bezierPath.ControlPointMode != BezierPath.ControlMode.Automatic || !globalDisplaySettings.hideAutoControls);
+                Bounds bounds = bezierPath.CalculateBoundsWithTransform (creator.transform);
 
-            bool displayControlPoints = data.displayControlPoints && (bezierPath.ControlPointMode != BezierPath.ControlMode.Automatic || !globalDisplaySettings.hideAutoControls);
-            Bounds bounds = bezierPath.CalculateBoundsWithTransform (creator.transform);
+                if (Event.current.type == EventType.Repaint) {
+                    for (int i = 0; i < bezierPath.NumSegments; i++) {
+                        Vector3[] points = bezierPath.GetPointsInSegment (i);
+                        for (int j = 0; j < points.Length; j++) {
+                            points[j] = MathUtility.TransformPoint (points[j], creator.transform, bezierPath.Space);
+                        }
 
-            if (Event.current.type == EventType.Repaint) {
-                for (int i = 0; i < bezierPath.NumSegments; i++) {
-                    Vector3[] points = bezierPath.GetPointsInSegment (i);
-                    for (int j = 0; j < points.Length; j++) {
-                        points[j] = MathUtility.TransformPoint (points[j], creator.transform, bezierPath.Space);
+                        if (data.showPerSegmentBounds) {
+                            Bounds segmentBounds = CubicBezierUtility.CalculateSegmentBounds (points[0], points[1], points[2], points[3]);
+                            Handles.color = globalDisplaySettings.segmentBounds;
+                            Handles.DrawWireCube (segmentBounds.center, segmentBounds.size);
+                        }
+
+                        // Draw lines between control points
+                        if (displayControlPoints) {
+                            Handles.color = (bezierPath.ControlPointMode == BezierPath.ControlMode.Automatic) ? globalDisplaySettings.handleDisabled : globalDisplaySettings.controlLine;
+                            Handles.DrawLine (points[1], points[0]);
+                            Handles.DrawLine (points[2], points[3]);
+                        }
+
+                        // Draw path
+                        bool highlightSegment = (i == selectedSegmentIndex && Event.current.shift && draggingHandleIndex == -1 && mouseOverHandleIndex == -1);
+                        Color segmentCol = (highlightSegment) ? globalDisplaySettings.highlightedPath : globalDisplaySettings.bezierPath;
+                        Handles.DrawBezier (points[0], points[3], points[1], points[2], segmentCol, null, 2);
                     }
 
-                    if (data.showPerSegmentBounds) {
-                        Bounds segmentBounds = CubicBezierUtility.CalculateSegmentBounds (points[0], points[1], points[2], points[3]);
-                        Handles.color = globalDisplaySettings.segmentBounds;
-                        Handles.DrawWireCube (segmentBounds.center, segmentBounds.size);
+                    if (data.showPathBounds) {
+                        Handles.color = globalDisplaySettings.bounds;
+                        Handles.DrawWireCube (bounds.center, bounds.size);
                     }
 
-                    // Draw lines between control points
-                    if (displayControlPoints) {
-                        Handles.color = (bezierPath.ControlPointMode == BezierPath.ControlMode.Automatic) ? globalDisplaySettings.handleDisabled : globalDisplaySettings.controlLine;
-                        Handles.DrawLine (points[1], points[0]);
-                        Handles.DrawLine (points[2], points[3]);
-                    }
+                    // Draw normals
+                    if (data.showNormals) {
+                        if (!hasUpdatedNormalsVertexPath) {
+                            normalsVertexPath = new VertexPath (bezierPath, creator.transform, normalsSpacing);
+                            hasUpdatedNormalsVertexPath = true;
+                        }
 
-                    // Draw path
-                    bool highlightSegment = (i == selectedSegmentIndex && Event.current.shift && draggingHandleIndex == -1 && mouseOverHandleIndex == -1);
-                    Color segmentCol = (highlightSegment) ? globalDisplaySettings.highlightedPath : globalDisplaySettings.bezierPath;
-                    Handles.DrawBezier (points[0], points[3], points[1], points[2], segmentCol, null, 2);
+                        if (editingNormalsOld != data.showNormals) {
+                            editingNormalsOld = data.showNormals;
+                            Repaint ();
+                        }
+
+                        Vector3[] normalLines = new Vector3[normalsVertexPath.NumPoints * 2];
+                        Handles.color = globalDisplaySettings.normals;
+                        for (int i = 0; i < normalsVertexPath.NumPoints; i++) {
+                            normalLines[i * 2] = normalsVertexPath.GetPoint (i);
+                            normalLines[i * 2 + 1] = normalsVertexPath.GetPoint (i) + normalsVertexPath.GetNormal (i) * globalDisplaySettings.normalsLength;
+                        }
+                        Handles.DrawLines (normalLines);
+                    }
                 }
 
-                if (data.showPathBounds) {
-                    Handles.color = globalDisplaySettings.bounds;
-                    Handles.DrawWireCube (bounds.center, bounds.size);
+                if (data.displayAnchorPoints) {
+                    for (int i = 0; i < bezierPath.NumPoints; i += 3) {
+                        DrawHandle (i);
+                    }
                 }
-
-                // Draw normals
-                if (data.showNormals) {
-                    if (!hasUpdatedNormalsVertexPath) {
-                        normalsVertexPath = new VertexPath (bezierPath, creator.transform, normalsSpacing);
-                        hasUpdatedNormalsVertexPath = true;
+                if (displayControlPoints) {
+                    for (int i = 1; i < bezierPath.NumPoints - 1; i += 3) {
+                        DrawHandle (i);
+                        DrawHandle (i + 1);
                     }
-
-                    if (editingNormalsOld != data.showNormals) {
-                        editingNormalsOld = data.showNormals;
-                        Repaint ();
-                    }
-
-                    Vector3[] normalLines = new Vector3[normalsVertexPath.NumPoints * 2];
-                    Handles.color = globalDisplaySettings.normals;
-                    for (int i = 0; i < normalsVertexPath.NumPoints; i++) {
-                        normalLines[i * 2] = normalsVertexPath.GetPoint (i);
-                        normalLines[i * 2 + 1] = normalsVertexPath.GetPoint (i) + normalsVertexPath.GetNormal (i) * globalDisplaySettings.normalsLength;
-                    }
-                    Handles.DrawLines (normalLines);
                 }
             }
-
-            if (data.displayAnchorPoints) {
-                for (int i = 0; i < bezierPath.NumPoints; i += 3) {
-                    DrawHandle (i);
-                }
-            }
-            if (displayControlPoints) {
-                for (int i = 1; i < bezierPath.NumPoints - 1; i += 3) {
-                    DrawHandle (i);
-                    DrawHandle (i + 1);
-                }
-            }
+            
         }
 
         void DrawHandle (int i) {
@@ -617,15 +620,19 @@ namespace PathCreationEditor {
         }
 
         void SetTransformState (bool initialize = false) {
-            Transform t = creator.transform;
-            if (!initialize) {
-                if (transformPos != t.position || t.localScale != transformScale || t.rotation != transformRot) {
-                    data.PathTransformed ();
+            if(creator != null)
+            {
+                Transform t = creator.transform;
+                if (!initialize) {
+                    if (transformPos != t.position || t.localScale != transformScale || t.rotation != transformRot) {
+                        data.PathTransformed ();
+                    }
                 }
+                transformPos = t.position;
+                transformScale = t.localScale;
+                transformRot = t.rotation;
             }
-            transformPos = t.position;
-            transformScale = t.localScale;
-            transformRot = t.rotation;
+            
         }
 
         void OnUndoRedo () {
